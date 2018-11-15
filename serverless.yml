@@ -1,0 +1,44 @@
+service: test-serverless
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+  environment:
+    DYNAMODB_USER_TABLE: ${self:service}-${opt:stage, self:provider.stage}-Users
+functions:
+  usersGet:
+    handler: handler.usersGet
+    events:
+      - http:
+          path: ''
+          method: get
+  usersCreate:
+    handler: handler.usersCreate
+    events:
+      - http:
+          path: '/create'
+          method: get # setting the method to GET for testing
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-${opt:stage, self:provider.stage}-Users
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline
+custom:
+  dynamodb:
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true # create tables on start
